@@ -1,4 +1,5 @@
 sides= 5;
+bracket_angle=0;//31.72 for 1v
 bracket_width = 20;
 bracket_length = 60;
 hole_spacing = 30;
@@ -13,21 +14,23 @@ inner_radius = ((bracket_width/2)/sin(angle/2));
 bracket_offset=cos(angle/2)*inner_radius;
 
 //Example usage: 
-linear_extrude(height=2){	
 	bracket(5);
-	translate([0,-100,0])rotate([0,0,angle])bracket(4);
-}
+	translate([0,-130])bracket(4);
 
 module bracket(arms){
 	union(){
-		rotate([0,0,-90*((sides%2))])circle($fn=sides, r=inner_radius);
-		for(r=[0:arms-1]){
+		linear_extrude(bracket_thickness){
+			rotate([0,0,-90*((sides%2))])circle($fn=sides, r=inner_radius);
+		}
+		for(r=[1:arms]){
 			rotate([0,0, r*angle])translate([0,bracket_offset])bracket_arm();
 		}
 	}
 }
 
 module bracket_arm(){
+	rotate([bracket_angle, 0,0]){
+	{linear_extrude(height=bracket_thickness){
 	difference(){
 		translate([-bracket_width/2,0])square([bracket_width, bracket_length]);
 		union(){
@@ -38,4 +41,7 @@ module bracket_arm(){
 			}
 		}
 	}
+}
+}
+}
 }
