@@ -15,12 +15,12 @@ bracket_offset=cos(angle/2)*inner_radius;
 
 //Example usage: 
 	bracket(5);
-	translate([0,-130])bracket(4);
+	translate([0,200])bracket(4);
 
 module bracket(arms){
 	union(){
 		linear_extrude(bracket_thickness){
-			rotate([0,0,-90*((sides%2))])circle($fn=sides, r=inner_radius);
+			rotate([0,0,270*((sides%2))])circle($fn=sides, r=inner_radius);
 		}
 		for(r=[1:arms]){
 			rotate([0,0, r*angle])translate([0,bracket_offset])bracket_arm();
