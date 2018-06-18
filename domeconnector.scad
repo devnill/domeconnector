@@ -2,32 +2,31 @@ interface_angle=31.72;
 //connector_angle=90-interface_angle;
 
 interface_width=20;
-interface_height=20;
+interface_height=22;
 
 //groove on interface
-interface_groove=1.5;///1.5;
+interface_groove=2;//2;;
 
 //groove on inside
-inner_groove = 2;
+inner_groove = 2;//2;
 
 //groove on bottom
 base_groove = 0;//2;
 
 interface_spacing_width=2;//1;
-interface_spacing_height=0;//1;
-
 sides=5;
 sides_to_draw = sides;
-inner_wall_thickness = 2;
-base_wall_thickness =0;//3;
+
+//TODO
+inner_wall_thickness = 0;//2
+base_wall_thickness =0;
 
 face_width=interface_width+(2*interface_spacing_width);
-face_height=interface_height+(2*interface_spacing_height);
-
+face_height=interface_height;//+(2*interface_spacing_height);//+(2*(interface_groove/tan(interface_angle)));
 
 connector_height = face_height    * cos(interface_angle);
 connector_width  = face_height     * sin(interface_angle);
-
+echo("h/w", face_height, connector_width);
 inner_radius     = (face_width/2) / sin(360/(sides*2));
 inner_apothem    = (face_width/2) / tan(360/(sides*2));
 //outer_radius   = inner_radius  + connector_width;
@@ -44,29 +43,42 @@ connector();
 
 
 module connector(){
+difference(){							
 	for (i=[0:sides_to_draw-1]){
 		rotate([0,0,i*angle]){	
-			translate([inner_wall_thickness+inner_apothem,-face_width/2,0]){
-                difference(){
+			translate([/*inner_wall_thickness+*/inner_apothem,-face_width/2,0]){
+        	      
+				union(){
 										strut_interface();
-									color([0,1,0])cutout();
-                
-									}
-										corner_bevel();
-								
+										translate([0, 0, 0]){
+											color([0,1,0])channel();	
+										}
+										translate([0, interface_width+interface_spacing_width, 0]){
+											color([0,0,1])channel();
+										}
+									corner_bevel();
+								}
+							
 								//translate([connector_width-(interface_groove/tan(interface_angle)),0,0])rotate([0,-interface_angle,0])color([0,0,1])cube([1.5,20,20]);
 			}
 		}
 	}
+	translate([-50,-50,connector_height+2])cube([100,100,2]);
+
+}
 }
 
 module strut_interface(){
 	id = face_width;
-	iw = inner_wall_thickness;
+	iw = 0;//inner_wall_thickness;
 	ch = connector_height;
-    cw = connector_width;
-	bw = base_wall_thickness;
-    
+	cw = connector_width;
+	echo("cw=",cw);
+	echo("ch=",ch);
+	echo("id=",id);
+	echo("ih=",interface_height);
+	bw = 0;//base_wall_thickness;
+    //echo();
     interface_surface();
     inner_wall_surface();
     base_wall_surface();
@@ -75,10 +87,10 @@ module strut_interface(){
     	interfacePoints = [
         [  0,  0,  0 ],//0 
         [  0, id,  0 ],//1
-	 	[ cw, id,  0 ],//2 
-		[ cw,  0,  0 ],//3 	  
-		[  0, id, ch ],//4
-		[  0,  0, ch ]	//5
+				[ cw, id,  0 ],//2 
+				[ cw,  0,  0 ],//3 	  
+				[  0, id, ch ],//4
+				[  0,  0, ch ]	//5
         ];     
         interfaceFaces = [
         [ 0, 1, 2, 3 ],
@@ -158,13 +170,77 @@ module strut_interface(){
 
 
 
-module cutout(){
+module channel(){
+	  iw = 0;//inner_wall_thickness;
+	  ch = connector_height;
+    cw = connector_width;
+	  bw = 0;//base_wall_thickness;
+    bd = base_groove;
+    id = interface_groove/tan(interface_angle);
+		ih = cos(interface_angle)*interface_height;
+    mw =interface_spacing_width;
+   	fw = face_width-mw;
+    ig=inner_groove;
+		wh=bw-bd;
+		bi=id/tan(90-interface_angle);
+    
+		mw=0;
+		fw=interface_spacing_width;
+//[ -14.63, 11.23, 18.94 ]		translate([connector_width,0,-2])cube([2,2,2]);
+		translate([-inner_groove,0,-base_groove])cube([inner_groove,interface_spacing_width,base_groove]);
+		
+		translate([-inner_groove,0,connector_height])cube([inner_groove,interface_spacing_width,id]);
+	
+		if(inner_groove>0){
+			inner_wall_cutout();
+		}
+		if(base_groove>0){
+			base_wall_cutout();
+		}
+		if(interface_groove>0){
+			interface_cutout();
+    }
+		
+    module interface_cutout(){
+			
+			//echo((ch-id)/cos(interface_angle));
+    	interfacePoints = [
+            [ cw+bi, fw,  0  ],//2 ->0
+            [ cw+bi, mw,  0  ],//3 - 1
+            [  0,    fw,  ch+id ],//4 - 2
+            [  0,    mw,  ch+id ],	//5 -3
+            [ cw,    fw,  0  ],//2 ->0
+            [ cw,    mw,  0  ],//3 - 1
+            [  0,    fw,  ch ],//4 - 2
+            [  0,    mw,  ch ]	//5 -3
+        ];     
+        interfaceFaces = [
+            [ 1, 0, 2, 3 ],
+            [ 7,6,4,5 ],
+            [ 7,6,4,5 ],
+            [1, 5, 4, 0],
+            [2,6,7,3],
+            [4,6,2,0],
+            [7,5,1,3]
+        ];	
+				polyhedron( interfacePoints, interfaceFaces );
+		}
+
+    module inner_wall_cutout(){
+			translate([-ig,mw,-bw])cube([ig,fw,bw+ch]);
+    }
+    module base_wall_cutout(){
+			translate([-iw,mw,-bw-bd])cube([cw+iw,fw,bd]);
+		} 
+}
+module _cutout(){
 	  iw = inner_wall_thickness;
 	  ch = connector_height;
     cw = connector_width;
 	  bw = base_wall_thickness;
     bd = base_groove;
-    id = interface_groove/tan(interface_angle);
+    id = interface_groove/sin(interface_angle);
+		ih=cos(interface_angle)*interface_height;
     mw =interface_spacing_width;
    	fw = face_width-mw;
     ig=inner_groove;
@@ -181,14 +257,16 @@ module cutout(){
     }
 		}
     module interface_cutout(){
-        
+        bi=id/tan(90-interface_angle);
+			
+			//echo((ch-id)/cos(interface_angle));
     	interfacePoints = [
             [ cw, fw,  0 ],//2 ->0
             [ cw,  mw,  0 ],//3 - 1
             [  0, fw, ch ],//4 - 2
             [  0,  mw, ch ],	//5 -3
-            [ cw, fw,  0-id ],//2 ->0
-            [ cw,  mw,  0-id ],//3 - 1
+            [ cw-bi, fw,  0 ],//2 ->0
+            [ cw-bi,  mw,  0],//3 - 1
             [  0, fw, ch-id ],//4 - 2
             [  0,  mw, ch-id ]	//5 -3
         ];     
@@ -262,30 +340,37 @@ module cutout(){
  
 }
 
-   module corner_bevel(){
+module corner_bevel(){
 		cw=connector_width;
-		ch=connector_height;
-		iw=inner_wall_thickness;	
-		bw=base_wall_thickness;
-		ox = (cos(angle) * (iw+cw))-iw;
-		oy = (sin(angle) * (iw+cw)); 
+		ch=connector_height+(interface_groove/tan(interface_angle));
+		iw=0;//inner_wall_thickness;	
+		bw=base_groove;
+    id = interface_groove/tan(interface_angle);
+		bi=id/tan(90-interface_angle);
+		//outer_length=
+//		cube([connector_width,10,10]);
+	  ox = (cos(angle) * (iw+cw+bi))-iw ;
+		oy = (sin(angle) * (iw+cw+bi)); 
 		ix = (cos(angle) * iw) - iw;
 		iy = (sin(angle) * iw);
 
+		
+		x1=cw+bi;
+	
 		bevelPoints = [
-            [   0,   0,  0 ], //0 //interface base center
-            [  cw,   0,  0 ], //1 //interface base edge
-            [  ox,  oy,  0 ], //2 //outer base edge
-            [  ix,  iy,  0 ], //3 //outer base center
+			[   0,   0,  0 ], //0 //interface base center
+			[  x1,   0,  0 ], //1 //interface base edge ++++++++++++++++++++++++++++++++++==
+			[  ox,  oy,  0 ], //2 //outer base edge
+			[  ix,  iy,  0 ], //3 //outer base center
 			[   0,   0, ch ], //4 //interface top center
 			[  ix,  iy, ch ], //5 //outer top center
 		]; 
     
 		bevelFaces = [
-            [1,0,3,2], //bottom
+			[1,0,3,2], //bottom
 			[ 4, 0, 1], //inner interface side
 			[ 2, 3 ,5],// opposite of interface
-            [ 4, 1, 2, 5 ], //outside face
+      [ 4, 1, 2, 5 ], //outside face
 			[3, 0, 4, 5]//back
 		];
 		
