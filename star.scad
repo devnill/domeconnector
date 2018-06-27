@@ -6,7 +6,7 @@ hole_spacing = 30;
 hole_diameter = 5;
 hole_count = 2;
 hole_spacing = bracket_width*1.25;
-hole_spacings = [10,40,60,90]; 
+hole_spacings = [];//[10,40,60,90]; 
 hole_offset  = -bracket_width/2;
 bracket_thickness=2;
 
